@@ -3,6 +3,8 @@ package com.blog.bolgpostproject.entities;
 import jakarta.persistence.*;
 import org.antlr.v4.runtime.misc.NotNull;
 
+import java.util.Set;
+
 @Entity
 @Table(name = "users")
 public class User {
@@ -14,6 +16,9 @@ public class User {
     private String name;
     private String email;
     private String password;
+
+    @OneToMany(mappedBy = "user")
+    private Set<Post> posts;
 
     public Long getId() {
         return id;

@@ -1,13 +1,10 @@
 package com.blog.bolgpostproject.services;
 
 import com.blog.bolgpostproject.entities.Post;
-import java.util.*;
+import com.blog.bolgpostproject.entities.User;
 
 public interface PostService {
 
-    Post createPost(Post post);
+       Post createpost(Post post);
 
-    List<Post> getAllPosts();
-
-    Post getPostById(Long id);
 }
