@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,7 +19,7 @@ public class Post {
     @Size(max = 500, message = "Excerpt can't exceed 500 characters")
     private String excerpt;
 
-    @Size(max = 1000, message = "content can't exceed 1000 characters")
+    @Column(columnDefinition = "TEXT")
     private String content;
     private String author;
 
@@ -31,18 +30,16 @@ public class Post {
     private Boolean isPublished = true;
 
     @Column(name = "created_at")
-    @CreationTimestamp
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
-    @UpdateTimestamp
     private LocalDateTime updatedAt;
 
     @ManyToMany
     @JoinTable(name="post_tags",
             joinColumns = @JoinColumn(name="post_id"),
             inverseJoinColumns = @JoinColumn(name="tag_id"))
-    private Set<Tag> tags;
+    private List<Tag> tags;
 
     @OneToMany(mappedBy = "post")
     private List<Comment> comments;
@@ -123,11 +120,11 @@ public class Post {
         this.updatedAt = updatedAt;
     }
 
-    public Set<Tag> getTags() {
+    public List<Tag> getTags() {
         return tags;
     }
 
-    public void setTags(Set<Tag> tags) {
+    public void setTags(List<Tag> tags) {
         this.tags = tags;
     }
 
@@ -139,7 +136,7 @@ public class Post {
         this.comments = comments;
     }
 
-    public Post(Long id, String title, String excerpt, String content, String author, LocalDateTime publishedAt, boolean isPublished, LocalDateTime createdAt, LocalDateTime updatedAt, Set<Tag> tags, List<Comment> comments) {
+    public Post(Long id, String title, String excerpt, String content, String author, LocalDateTime publishedAt, boolean isPublished, LocalDateTime createdAt, LocalDateTime updatedAt, List<Tag> tags, List<Comment> comments) {
         this.id = id;
         this.title = title;
         this.excerpt = excerpt;
@@ -166,10 +163,11 @@ public class Post {
                 ", author='" + author + '\'' +
                 ", publishedAt=" + publishedAt +
                 ", isPublished=" + isPublished +
-                ", createdAt=" +
+                ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
-                ", tags=" + tags +
-                ", comments=" + comments +
+                // Don't include the full tags and comments objects
+                ", tagsCount=" + (tags != null ? tags.size() : 0) +
+                ", commentsCount=" + (comments != null ? comments.size() : 0) +
                 '}';
     }
 

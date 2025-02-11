@@ -17,10 +17,6 @@ public class Comment {
     private String email;
     private String comment;
 
-    @ManyToOne
-    @JoinColumn(name="post_id",nullable = false)
-    private Post post;
-
     @Column(name = "created_at")
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -28,6 +24,10 @@ public class Comment {
     @Column(name = "updated_at")
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @ManyToOne
+    @JoinColumn(name="post_id",nullable = false)
+    private Post post;
 
     public Long getId() {
         return id;

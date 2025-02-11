@@ -1,23 +1,29 @@
 package com.blog.bolgpostproject.controllers;
 
 import com.blog.bolgpostproject.entities.Post;
-import com.blog.bolgpostproject.entities.Tag;
+
 import com.blog.bolgpostproject.repositories.TagRepository;
 import com.blog.bolgpostproject.services.PostService;
+import com.blog.bolgpostproject.services.TagServiceImplementation;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.List;
+
 
 @Controller
 public class PostController {
     @Autowired
     private PostService postService;
+
+    @Autowired
+    private TagServiceImplementation tagService;
 
     @Autowired
     TagRepository tagRepository;
@@ -36,63 +42,67 @@ public class PostController {
         return "login";
     }
 
-//    @PostMapping("/createpost")
-//    public String createpost(@ModelAttribute Post post,@RequestParam(required=false) String tags){
-//        if(tags!=null && !tags.isEmpty()){
-//            String[] tagNames=tags.split(",");
-//            Set<Tag> tagSet=new HashSet<>();
-//
-//            for(String tagName:tagNames){
-//                Tag tag=new Tag();
-//                tag.setName(tagName);
-//                tagSet.add(tag);
-//            }
-//            post.setTags(tagSet);
-//        }
-//        System.out.println("inside method");
-//        post.setCreatedAt(LocalDateTime.now());
-//        post.setUpdatedAt(LocalDateTime.now());
-//
-//        postService.createPost(post);
-//        return "temp";
-//    }
 
     @PostMapping("/createpost")
-    public String createpost(@RequestParam Map<String, String> allParams, @RequestParam(required = false) String tags,HttpSession session) {
-        Post post = new Post();
-        String username=(String)session.getAttribute("username");
-        post.setTitle(allParams.get("title"));
-        post.setExcerpt(allParams.get("excerpt"));
-        post.setContent(allParams.get("content"));
-        post.setAuthor(username);
-        // Set other fields from allParams
-
-        if (tags != null && !tags.isEmpty()) {
-            String[] tagNames = tags.split(",");
-            Set<Tag> tagSet = new HashSet<>();
-
-            for (String tagName : tagNames) {
-                Tag tag = new Tag();
-                tag.setName(tagName.trim());
-
-                Tag existingTag = tagRepository.findByName(tagName.trim());
-                if (existingTag != null) {
-                    tagSet.add(existingTag);
-                } else {
-                    tagRepository.save(tag);
-                    tagSet.add(tag);
-                }
-            }
-            post.setTags(tagSet);
-        }
-
-        post.setCreatedAt(LocalDateTime.now());
-        post.setUpdatedAt(LocalDateTime.now());
+    public String createpost(@Valid @ModelAttribute Post post,BindingResult bindingResult, @RequestParam String tags,HttpSession session){
+//        String username=(String)session.getAttribute("username");
+//        post.setAuthor(username);
         post.setPublishedAt(LocalDateTime.now());
-        postService.createpost(post);
-
-        return "temp";
+        post.setUpdatedAt(LocalDateTime.now());
+        post.setCreatedAt(LocalDateTime.now());
+        String[] tagList=tags.split(",");
+        postService.addPost(post,tagList);
+        return "redirect:/posts";
     }
 
+    @GetMapping("/posts")
+    public String getPosts(Model model) {
+        List<Post>  posts = postService.getAllPosts();
+        model.addAttribute("posts", posts);
+        return "posts";
+    }
+
+    @GetMapping("/myPosts")
+    public String getMyPosts(Model model,HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username != null) {
+            List<Post> myposts = postService.getPostsByLoggedInUser(username);
+            model.addAttribute("myposts", myposts);
+            model.addAttribute("currentuser",username);
+        }
+        return "myposts";
+    }
+    @GetMapping("/posts/{id}")
+    public String viewSinglePost(@PathVariable Long id,Model model){
+        Post post=postService.getPostById(id);
+        model.addAttribute("post",post);
+        return "displaysinglepost";
+    }
+
+    @GetMapping("/edit/{id}")
+    public String editPost(@PathVariable Long id,Model model){
+        Post post=postService.getPost(id);
+        model.addAttribute("post",post);
+        return "editpost";
+    }
+
+    @PostMapping("/edit/{id}")
+    public String updatePost(@PathVariable Long id,@ModelAttribute Post updatedPost){
+        Post existingPost=postService.getPostById(id);
+
+        existingPost.setTitle(updatedPost.getTitle());
+        existingPost.setExcerpt(updatedPost.getExcerpt());
+        existingPost.setContent(updatedPost.getContent());
+
+        postService.savePost(existingPost);
+
+        return "redirect:/myPosts";
+    }
+
+    @GetMapping("/delete/{id}")
+    public String deletePost(@PathVariable Long id){
+        postService.deletePost(id);
+        return "redirect:/myPosts";
+    }
 
 }
